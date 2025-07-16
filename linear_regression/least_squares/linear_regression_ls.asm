@@ -17,12 +17,11 @@
 # double y_mean 	ft5
 # double beta_1_num	ft10
 # double beta_1_denom	ft11
-
 	.text
 	.global fit 
 fit: 
 	mv	t0, zero	# i = 0
-	fcvt.d.w ft0, t0	# x_sum = 0 
+	fcvt.d.w ft0, zero	# x_sum = 0 
 	fmv.d	ft1, ft0	# y_sum = 0 
 	fmv.d 	ft2, ft0	# xy_sum = 0 
 	fmv.d	ft3, ft0	# x_squared_sum = 0 
@@ -40,6 +39,7 @@ for_loop:
 	fmul.d	ft9, ft6, ft6	# ft9 = x[i] * x[i]
 	fadd.d  ft3, ft3, ft9	# x_squared_sum += x[i] * x[i]
 	addi	t0, t0, 1	# i++
+	j	for_loop
 end_loop: 	
 	fcvt.d.w ft9, a2	# ft9 = (double) n 
 	fdiv.d	ft4, ft0, ft9	# x_mean = x_sum / n 
@@ -56,4 +56,36 @@ end_loop:
 	fsub.d	ft9, ft5, ft9	# ft9 = y_mean - (*beta_1) * x_mean
 	fsd	ft9, (a3)	# *beta_0 = y_mean - (*beta_1) * x_mean
 	ret 
+	
+	
+	
+# void predict(double x[], double y_pred[], int n, double beta_0, double beta_1)
+#
+# parameters		registers
+# double* x 		a0
+# double* y_pred 	a1
+# int n			a2
+# doulbe beta_0		fa0
+# double beta_1		fa1
+#
+# local variables	registers 
+# int i 		t0 
+	.text
+	.global predict 
+predict: 	
+	mv	t0, zero	# i = 0
+for_loop:
+	bge	t0, a2, end_loop # if (i >= n) goto end_loop
+	slli	t1, t0, 3	# t1 = I * 8
+	add	t2, a0, t1	# t2 = &x[i]
+	fld	ft0, (t2)	# ft0 = x[i]
+	fmul.d	ft1, fa1, ft0	# ft1 = beta_1 * x[i]
+	fadd.d	ft1, ft1, fa0	# ft1 += beta_0
+	add	t3, a1, t1	# t3 = &y_pred[i]
+	fsd	ft1, (t3)	# y_pred[i] = beta_0 + beta_1 * x[i]
+	addi	t0, t0, 1	# i++
+	j	for_loop
+end_loop:
+	ret
+	
 
