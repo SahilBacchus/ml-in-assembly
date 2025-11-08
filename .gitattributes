@@ -1,0 +1,13 @@
+
+#############################################################
+#----------------- Github Linguist -------------------------#
+#############################################################
+
+# Github linguist calculates the language breakdown based on file size in bytes
+#
+
+
+# Setting Juptyer notebooks to documentation to have language stats better align with the repo
+# Since the embedded images skews the breakdown towards .ipynb files 
+
+*.ipynb linguist-documentation
