@@ -50,7 +50,7 @@ main:
 	fsd 	fs0, 8(sp)
 	fsd	fs1, 0(sp)
 
-	# call fit(x, y, 4, &theta_0, &theta_1, 0.1, 100)
+	# call train(x, y, 4, &theta_0, &theta_1, 0.1, 100)
 	la	a0, x		
 	la	a1, y
 	li 	a2, 4 
@@ -59,7 +59,7 @@ main:
 	fld	fa0, alpha, t0
 	lw	a5, epochs
 	
-	call	fit
+	call	train
 	
 	fld	fs0, theta_0, t0		# fs0 = theta_0
 	fld	fs1, theta_1, t0		# fs1 = theta_1
@@ -159,7 +159,7 @@ end_loop_print:
 	
 	
 	
-# void fit(double x[], double y[], int m, double* theta_0, double* theta_1, double alpha, int epochs)
+# void train(double x[], double y[], int m, double* theta_0, double* theta_1, double alpha, int epochs)
 #
 # parameters		registers
 # double* x 		a0
@@ -178,8 +178,8 @@ end_loop_print:
 # y_pred		ft2
 # error			ft3
 	.text
-	.global fit 
-fit:
+	.global train 
+train:
 	li	t0, 1		# epoch = 1
 for_loop_epoch:
 	bgt	t0, a5, end_loop_epoch	# if (epoch > epochs) goto end_loop_epoch

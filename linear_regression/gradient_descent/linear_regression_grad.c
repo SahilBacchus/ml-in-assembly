@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-void fit(double x[], double y[], int m, double* theta_0, double* theta_1, double alpha, int epochs);
+void train(double x[], double y[], int m, double* theta_0, double* theta_1, double alpha, int epochs);
 void predict(double x[], double y_pred[], int n, double theta_0, double theta_1);
 
 
@@ -9,7 +9,7 @@ int main(void){
     double y[] = {3, 5, 7, 9};
     double theta_0, theta_1; 
 
-    fit(x, y, 4, &theta_0, &theta_1, 0.1, 100); 
+    train(x, y, 4, &theta_0, &theta_1, 0.1, 100); 
 
     double x_test[] = {5, 6}; 
     double y_pred[2]; 
@@ -32,7 +32,7 @@ int main(void){
 
 
 
-void fit(double x[], double y[], int m, double* theta_0, double* theta_1, double alpha, int epochs){
+void train(double x[], double y[], int m, double* theta_0, double* theta_1, double alpha, int epochs){
 
     // Perform gradient descent over the full training data once per epoch
     for (int epoch = 1; epoch <= epochs; epoch++){
