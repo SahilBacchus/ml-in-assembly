@@ -1,5 +1,88 @@
 
+
+# TODO:
+# possibly redo this since I am overwriting a registers 
+
+
+
+
+# void train(double X[][2], double Y[], int num_samples, int num_features, double weights[], double eta, int epochs)
+#
+# parameters		registers
+# double X[][2] 	a0
+# double Y[]		a1
+# int num_samples	a2
+# int num_features	a3
+# double weights[]	a4
+# int epochs		a5
+# double weights[]	fa0
+#
+# local variables	registers 
+# int i 		t0
+# int epoch		t1
+# int j			t3
+# int y_pred		t3 
+# int error		ft3
+	.text
+	.global train 
+train:
+	mv	t0, zero	# i = 0
+for_loop_init_weights:
+	bgt 	t0, a3, end_init_weights_loop	# if (i > num_features) goto end_loop_iniit_weights
+	slli 	t5, t0, 3	# t5 = i * 8
+	add 	t6, a5, t0	# t6 = &weights[i]
+	fcvt.d.w ft0, zero	# ft0 = 0.0
+	fsd	ft0, (t6)	# weights[i] = 0.0
+	addi 	t0, t0, 1	# i++
+end_loop_init_weights:
 	
+	mv	t1, zero	# epoch = 0
+for_loop_epochs:
+	bge	t1, a5, end_loop_epochs	# if (epoch >= epochs) goto end_loop_epochs
+	mv	t0, zero	# i = 0
+for_samples_loop:
+	bge	t0, a2, end_samples_loop # if (i >= num_samples) goto end_samples_loop
+	slli	t5, t0, 4	# t5 = i * 16 (2 doubles) 
+	add	t6, a0, t5	# t6 = &X[i][0]
+	
+	# call predict(X[i], num_features, weights)
+	mv	a0, t6
+	mv	a1, a3
+	mv	a2, a4
+	call predict
+	
+	mv	t5, a0		# y_pred = predict(X[i], num_features, weights)
+	slli 	t7, t0, 3	# t7 = i * 8 
+	add	t8, a1, t7	# t8 = &Y[i]
+	fld	ft1, (t8)	# ft1 = Y{i]
+	fsub.d	ft3, ft1, ft2	# error = Y[i] - j_pred
+	
+	fmul.d ft4, fa0, ft3	# ft4 = eta * error
+	fld	ft5, (a4)	# ft5 = weights[0]
+	fadd.d	ft5, ft5, ft4	# ft5 += eta * error
+	fsd ft5, (a4)	# weights[0] += eta*error
+	
+	mv	t3, zero
+for_weights_update_loop: 
+	bge	t3, a3, end_weights_update_loop
+	slli	t9, t3, 3	# t9 = j * 8 
+	add	t9, t5, t9	# t9 = &X[i}{j}
+	fld	ft6, (t9)	# ft6 = X[i][j]
+	fmul.d	ft7, ft4, ft6	# ft7 = eta * error * X[i][j]
+	addi	t10, t9, 8	# t10 = (j + 1) * 8
+	add	t11, a4, t10	# t11 = &weights[j+1]
+	fld	ft12, (t11)	# ft12 = weights[j+1]
+	fadd.d	ft12, ft12, ft7 # ft12 += eta * error * X[i][j]
+	fsd	ft12, (t11)	# weights[j + 1] += eta * error * X[i][j]
+end_weights_update_loop:
+
+end_samples_loop:
+
+end_loop_epochs:
+
+
+	
+		
 # int predict(double x[], int n, double weights[])
 #
 # parameters		registers
