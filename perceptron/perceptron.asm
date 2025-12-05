@@ -2,7 +2,7 @@
 
 # TODO:
 # possibly redo this since I am overwriting a registers 
-
+# epilogue and prolgue has been added to train() but s registers are not used yet
 
 
 
@@ -15,7 +15,7 @@
 # int num_features	a3
 # double weights[]	a4
 # int epochs		a5
-# double weights[]	fa0
+# double eta		fa0
 #
 # local variables	registers 
 # int i 		t0
@@ -26,6 +26,24 @@
 	.text
 	.global train 
 train:
+	# Prologue
+	addi	sp, sp, -48
+	sw	ra, 44(sp)
+	sw	s0, 40(sp)
+	sw	s1, 36(sp)
+	sw	s2, 32(sp)
+	sw	s3, 28(sp)
+	sw	s4, 24(sp)
+	sw	s5, 20(sp)
+	fsd 	fs0, 12(sp)
+	
+	mv	s0, a0		# s0 = double X[][2]
+	mv	s1, a1		# s1 = doulbe Y[]
+	mv	s2, a2		# s2 = num_samples 
+	mv	s3, a3		# s3 = num_features 
+	mv 	s4, a4		# s4 = weights[]
+	mv	s5, a5		# s5 = epochs
+	fmv.d	fs0, fa0	# fs0 = eta
 	mv	t0, zero	# i = 0
 for_loop_init_weights:
 	bgt 	t0, a3, end_init_weights_loop	# if (i > num_features) goto end_loop_iniit_weights
@@ -80,7 +98,18 @@ end_samples_loop:
 
 end_loop_epochs:
 
-
+	# Epilogue
+	fld	fs0, 12(sp)
+	lw	s5, 20(sp)
+	lw	s4, 24(sp)
+	lw	s3, 28(sp)
+	lw	s2, 32(sp)
+	lw	s1, 36(sp)
+	lw	s0, 40(sp)
+	lw	ra, 44(sp)
+	addi	sp, sp, 48
+	
+	ret
 	
 		
 # int predict(double x[], int n, double weights[])
@@ -96,6 +125,10 @@ end_loop_epochs:
 	.text
 	.global predict 
 predict:
+	# Prologue 
+	addi	sp, sp, -16
+	sw	ra, 12(sp)
+	
 	fld	ft0, (a2)	# z = weights[0] 	
 	mv	t0, zero	# i = 0
 for_loop_pred:
@@ -115,6 +148,11 @@ end_loop_pred:
 	# call step(z)
 	fmv.d	fa0, ft0
 	call	step
+	
+	# Epilogue 
+	lw	ra, 12(sp)
+	addi	sp, sp, 16
+
 	
 	ret
 	
