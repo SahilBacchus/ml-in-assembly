@@ -2,7 +2,8 @@
 
 # TODO:
 # possibly redo this since I am overwriting a registers 
-# epilogue and prolgue has been added to train() but s registers are not used yet
+# epilogue and prolgue has been added to train() but s registers are not used yet  [completed]
+# pointer arithmetic seems wonky in the weight update loop --? check that out 
 
 
 
@@ -18,11 +19,11 @@
 # double eta		fa0
 #
 # local variables	registers 
-# int i 		t0
-# int epoch		t1
-# int j			t3
-# int y_pred		t3 
-# int error		ft3
+# int i 		s6
+# int epoch		s7
+# int j			s8
+# int y_pred		s9 
+# double error		fs1
 	.text
 	.global train 
 train:
@@ -44,58 +45,68 @@ train:
 	mv 	s4, a4		# s4 = weights[]
 	mv	s5, a5		# s5 = epochs
 	fmv.d	fs0, fa0	# fs0 = eta
-	mv	t0, zero	# i = 0
+	mv	s6, zero	# i = 0
 for_loop_init_weights:
-	bgt 	t0, a3, end_init_weights_loop	# if (i > num_features) goto end_loop_iniit_weights
-	slli 	t5, t0, 3	# t5 = i * 8
-	add 	t6, a5, t0	# t6 = &weights[i]
+	bgt 	s6, s3, end_loop_init_weights	# if (i > num_features) goto end_loop_iniit_weights
+	slli 	t0, s6, 3	# t0 = i * 8
+	add 	t1, s4, t0	# t1 = &weights[i]
 	fcvt.d.w ft0, zero	# ft0 = 0.0
-	fsd	ft0, (t6)	# weights[i] = 0.0
-	addi 	t0, t0, 1	# i++
+	fsd	ft0, (t1)	# weights[i] = 0.0
+	addi 	s6, s6, 1	# i++
+	j for_loop_init_weights
 end_loop_init_weights:
 	
-	mv	t1, zero	# epoch = 0
+	mv	s7, zero	# epoch = 0
 for_loop_epochs:
-	bge	t1, a5, end_loop_epochs	# if (epoch >= epochs) goto end_loop_epochs
-	mv	t0, zero	# i = 0
+	bge	s7, s5, end_loop_epochs	# if (epoch >= epochs) goto end_loop_epochs
+	mv	s6, zero	# i = 0
 for_samples_loop:
-	bge	t0, a2, end_samples_loop # if (i >= num_samples) goto end_samples_loop
-	slli	t5, t0, 4	# t5 = i * 16 (2 doubles) 
-	add	t6, a0, t5	# t6 = &X[i][0]
+	bge	s6, s2, end_samples_loop # if (i >= num_samples) goto end_samples_loop
+	slli	t0, s6, 4	# t0 = i * 16 (2 doubles) 
+	add	t1, s0, t0	# t1 = &X[i][0]
 	
 	# call predict(X[i], num_features, weights)
-	mv	a0, t6
-	mv	a1, a3
-	mv	a2, a4
+	mv	a0, t1
+	mv	a1, s3
+	mv	a2, s4
 	call predict
 	
-	mv	t5, a0		# y_pred = predict(X[i], num_features, weights)
-	slli 	t7, t0, 3	# t7 = i * 8 
-	add	t8, a1, t7	# t8 = &Y[i]
-	fld	ft1, (t8)	# ft1 = Y{i]
-	fsub.d	ft3, ft1, ft2	# error = Y[i] - j_pred
+	mv	s9, a0		# y_pred = predict(X[i], num_features, weights)
+	slli 	t2, s6, 3	# t2 = i * 8 
+	add	t3, s1, t2	# t3 = &Y[i]
+	fld	ft1, (t3)	# ft1 = Y{i]
+	fcvt.d.w ft2, s9	# ft2 = (double) y_pred
+	fsub.d	fs1, ft1, ft2	# error = Y[i] - y_pred
 	
-	fmul.d ft4, fa0, ft3	# ft4 = eta * error
-	fld	ft5, (a4)	# ft5 = weights[0]
-	fadd.d	ft5, ft5, ft4	# ft5 += eta * error
-	fsd ft5, (a4)	# weights[0] += eta*error
+	fmul.d ft3, fs0, fs1	# ft3 = eta * error
+	fld	ft4, (s4)	# ft4 = weights[0]
+	fadd.d	ft4, ft4, ft3	# ft4 = weights[0] +  eta * error
+	fsd ft4, (s4)		# weights[0] += eta*error
 	
-	mv	t3, zero
+	mv	s8, zero	# j = 0
 for_weights_update_loop: 
-	bge	t3, a3, end_weights_update_loop
-	slli	t9, t3, 3	# t9 = j * 8 
-	add	t9, t5, t9	# t9 = &X[i}{j}
-	fld	ft6, (t9)	# ft6 = X[i][j]
-	fmul.d	ft7, ft4, ft6	# ft7 = eta * error * X[i][j]
-	addi	t10, t9, 8	# t10 = (j + 1) * 8
-	add	t11, a4, t10	# t11 = &weights[j+1]
-	fld	ft12, (t11)	# ft12 = weights[j+1]
-	fadd.d	ft12, ft12, ft7 # ft12 += eta * error * X[i][j]
-	fsd	ft12, (t11)	# weights[j + 1] += eta * error * X[i][j]
+	bge	s8, s3, end_weights_update_loop	# if ( j >= num_features) goto end_weights_update_loop
+	slli 	t0, s6, 4	# t0 = i * 16 (2 doubles)
+	slli	t1, s8, 3	# t1 = j * 8 
+	add	t0, t0, t1 	# t0 = i * 16 + j * 8
+	add	t1, s0, t0	# t1 = &X[i}{j}
+	fld	ft5, (t1)	# ft5 = X[i][j]
+	fmul.d	ft6, ft3, ft5	# ft7 = eta * error * X[i][j]
+	addi	t2, t0, 8	# t2 = (j + 1) * 8
+	add	t3, s4, t2	# t3 = &weights[j+1]
+	fld	ft7, (t3)	# ft7 = weights[j+1]
+	fadd.d	ft7, ft7, ft6 	# ft7 += eta * error * X[i][j]
+	fsd	ft7, (t3)	# weights[j + 1] += eta * error * X[i][j]
+	addi	s8, s8, 1	# j++
+	j	for_weights_update_loop
 end_weights_update_loop:
 
+	addi	s6, s6, 1	# i++
+	j	for_samples_loop
 end_samples_loop:
 
+	addi 	s7, s7, 1	# epoch++
+	j	for_loop_epochs
 end_loop_epochs:
 
 	# Epilogue
@@ -153,7 +164,6 @@ end_loop_pred:
 	lw	ra, 12(sp)
 	addi	sp, sp, 16
 
-	
 	ret
 	
 
