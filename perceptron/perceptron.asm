@@ -1,9 +1,7 @@
 
 
 # TODO:
-# possibly redo this since I am overwriting a registers 
-# epilogue and prolgue has been added to train() but s registers are not used yet  [completed]
-# pointer arithmetic seems wonky in the weight update loop --? check that out 
+# write main() 
 
 
 
@@ -28,15 +26,20 @@
 	.global train 
 train:
 	# Prologue
-	addi	sp, sp, -48
-	sw	ra, 44(sp)
-	sw	s0, 40(sp)
-	sw	s1, 36(sp)
-	sw	s2, 32(sp)
-	sw	s3, 28(sp)
-	sw	s4, 24(sp)
-	sw	s5, 20(sp)
+	addi	sp, sp, -64
+	sw	ra, 60(sp)
+	sw	s0, 56(sp)
+	sw	s1, 52(sp)
+	sw	s2, 48(sp)
+	sw	s3, 44(sp)
+	sw	s4, 40(sp)
+	sw	s5, 36(sp)
+	sw	s6, 32(sp)
+	sw	s7, 28(sp)
+	sw	s8, 24(sp)
+	sw	s9, 20(sp)
 	fsd 	fs0, 12(sp)
+	fsd	fs1, 4(sp)
 	
 	mv	s0, a0		# s0 = double X[][2]
 	mv	s1, a1		# s1 = doulbe Y[]
@@ -81,22 +84,22 @@ for_samples_loop:
 	fmul.d ft3, fs0, fs1	# ft3 = eta * error
 	fld	ft4, (s4)	# ft4 = weights[0]
 	fadd.d	ft4, ft4, ft3	# ft4 = weights[0] +  eta * error
-	fsd ft4, (s4)		# weights[0] += eta*error
+	fsd	ft4, (s4)	# weights[0] += eta*error
 	
 	mv	s8, zero	# j = 0
 for_weights_update_loop: 
 	bge	s8, s3, end_weights_update_loop	# if ( j >= num_features) goto end_weights_update_loop
 	slli 	t0, s6, 4	# t0 = i * 16 (2 doubles)
 	slli	t1, s8, 3	# t1 = j * 8 
-	add	t0, t0, t1 	# t0 = i * 16 + j * 8
-	add	t1, s0, t0	# t1 = &X[i}{j}
-	fld	ft5, (t1)	# ft5 = X[i][j]
-	fmul.d	ft6, ft3, ft5	# ft7 = eta * error * X[i][j]
-	addi	t2, t0, 8	# t2 = (j + 1) * 8
-	add	t3, s4, t2	# t3 = &weights[j+1]
-	fld	ft7, (t3)	# ft7 = weights[j+1]
+	add	t2, t0, t1 	# t2 = i * 16 + j * 8
+	add	t3, s0, t2	# t3 = &X[i}{j}
+	fld	ft5, (t3)	# ft5 = X[i][j]
+	fmul.d	ft6, ft3, ft5	# ft6 = eta * error * X[i][j]
+	addi	t4, t1, 8	# t4 = (j + 1) * 8
+	add	t5, s4, t4	# t5 = &weights[j+1]
+	fld	ft7, (t5)	# ft7 = weights[j+1]
 	fadd.d	ft7, ft7, ft6 	# ft7 += eta * error * X[i][j]
-	fsd	ft7, (t3)	# weights[j + 1] += eta * error * X[i][j]
+	fsd	ft7, (t5)	# weights[j + 1] += eta * error * X[i][j]
 	addi	s8, s8, 1	# j++
 	j	for_weights_update_loop
 end_weights_update_loop:
@@ -110,15 +113,20 @@ end_samples_loop:
 end_loop_epochs:
 
 	# Epilogue
+	fld	fs1, 4(sp)
 	fld	fs0, 12(sp)
-	lw	s5, 20(sp)
-	lw	s4, 24(sp)
-	lw	s3, 28(sp)
-	lw	s2, 32(sp)
-	lw	s1, 36(sp)
-	lw	s0, 40(sp)
-	lw	ra, 44(sp)
-	addi	sp, sp, 48
+	lw	s9, 20(sp)
+	lw	s8, 24(sp)
+	lw 	s7, 28(sp)
+	lw	s6, 32(sp)
+	lw	s5, 36(sp)
+	lw	s4, 40(sp)
+	lw	s3, 44(sp)
+	lw	s2, 48(sp)
+	lw	s1, 52(sp)
+	lw	s0, 56(sp)
+	lw	ra, 60(sp)
+	addi	sp, sp, 64
 	
 	ret
 	
