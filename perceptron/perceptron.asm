@@ -3,6 +3,48 @@
 # TODO:
 # write main() 
 
+.data
+X:				# X 2d array
+	.double 0, 0
+	.double 0, 1
+	.double 1, 0
+	.double 1, 1
+	
+y:	.double 0, 0, 0, 1	# y array
+weights: .space 24		# weights array (3 doulbes) 
+eta 	.double 0.1		# eta
+
+fmt_model_stats: .asciz "==== Model Stats ===="
+fmt_weights:	.asciz "\nWeights: ["
+fmt_comma:	.asciz ", "
+fmt_close_bracket: .asciz "]"
+fmt_testing:	.asciz "\n\n===== Testing ===="
+fmt_x_equals:	.asciz "\n  x = ["
+fmt_arrow_y:	.asciz "] -> y = "
+
+# startup code
+#
+	.text
+	.global _start
+_start: 
+	andi	sp, sp, -32 	# round sp down to a multiple of 32
+	jal	main		# note this will return 0 if successful (a0 = 0) 
+	li	a7, 93		# ecall "exit" call number
+	ecall
+
+
+
+# int main(void)
+#
+# local variables	registers 
+# int i 		s0
+# double X[][2] 	s1
+# double* y		s2 
+# double* weights	s3
+# int y_pred		s4
+	.text 
+	.global main
+main: 
 
 
 # void train(double X[][2], double Y[], int num_samples, int num_features, double weights[], double eta, int epochs)
